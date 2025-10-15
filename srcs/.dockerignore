@@ -1,0 +1,48 @@
+# Exclude sensitive files and directories
+secrets/
+.env
+.env.*
+*.key
+*.pem
+*.p12
+*.jks
+
+# Exclude version control
+.git/
+.gitignore
+.gitattributes
+
+# Exclude development tools
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Exclude documentation
+README.md
+*.md
+docs/
+
+# Exclude logs and temporary files
+*.log
+*.tmp
+*.bak
+*.pid
+
+# Exclude OS generated files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Exclude build artifacts
+node_modules/
+dist/
+build/
+target/
+
+# Exclude test files
+tests/
+test/
+*.test
+spec/

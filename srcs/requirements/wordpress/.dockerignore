@@ -1,0 +1,39 @@
+# Exclude sensitive files
+**/*.env
+**/*.env.*
+**/secrets/
+**/.git/
+**/.gitignore
+
+# Exclude development files
+**/*.log
+**/*.tmp
+**/*.bak
+**/*.swp
+**/.vscode/
+**/.idea/
+
+# Exclude documentation
+**/README.md
+**/docs/
+**/*.md
+
+# WordPress specific exclusions
+**/wp-content/uploads/
+**/wp-content/cache/
+**/wp-content/backup-db/
+**/wp-content/backups/
+**/wp-content/blogs.dir/
+**/wp-content/upgrade/
+
+# Exclude build and dependencies
+**/node_modules/
+**/dist/
+**/build/
+
+# Exclude OS files
+**/.DS_Store
+**/Thumbs.db
+
+# Exclude config files with sensitive data
+**/wp-config-sample.php

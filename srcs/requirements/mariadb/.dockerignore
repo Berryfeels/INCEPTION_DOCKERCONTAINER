@@ -1,0 +1,29 @@
+# Exclude sensitive files
+**/*.env
+**/*.env.*
+**/secrets/
+**/.git/
+**/.gitignore
+
+# Exclude development files
+**/*.log
+**/*.tmp
+**/*.bak
+**/*.swp
+**/.vscode/
+**/.idea/
+
+# Exclude documentation
+**/README.md
+**/docs/
+**/*.md
+
+# Exclude build artifacts
+**/node_modules/
+**/dist/
+**/build/
+
+# Exclude OS files
+**/.DS_Store
+**/Thumbs.db
+**/*.pid

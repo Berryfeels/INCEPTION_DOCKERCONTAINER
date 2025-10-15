@@ -1,0 +1,32 @@
+# Exclude sensitive files
+**/*.env
+**/*.env.*
+**/secrets/
+**/.git/
+**/.gitignore
+
+# Exclude development files
+**/*.log
+**/*.tmp
+**/*.bak
+**/*.swp
+**/.vscode/
+**/.idea/
+
+# Exclude documentation
+**/README.md
+**/docs/
+**/*.md
+
+# Exclude unnecessary files for nginx
+**/node_modules/
+**/src/
+**/tests/
+
+# Exclude OS files
+**/.DS_Store
+**/Thumbs.db
+
+# Exclude SSL private keys (if any)
+**/*.key
+**/*.pem

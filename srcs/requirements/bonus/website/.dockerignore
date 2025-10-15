@@ -1,0 +1,31 @@
+# Exclude sensitive files
+**/*.env
+**/*.env.*
+**/secrets/
+**/.git/
+**/.gitignore
+
+# Exclude development files
+**/*.log
+**/*.tmp
+**/*.bak
+**/*.swp
+**/.vscode/
+**/.idea/
+
+# Python specific
+**/__pycache__/
+**/*.pyc
+**/*.pyo
+**/*.pyd
+**/venv/
+**/env/
+
+# Exclude documentation
+**/README.md
+**/docs/
+**/*.md
+
+# Exclude OS files
+**/.DS_Store
+**/Thumbs.db
