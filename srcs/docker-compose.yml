@@ -2,7 +2,10 @@
 services:
   mariadb:
     build: ./requirements/mariadb
+    image: mariadb
+    pull_policy: never
     container_name: mariadb
+    hostname: mariadb
     restart: always
     env_file:
       - .env
@@ -12,33 +15,48 @@ services:
       MARIADB_DATABASE: ${MARIADB_DATABASE}
       MARIADB_USER: ${MARIADB_USER}
     secrets:
-      - db_password
-      - db_root_password
+      - source: db_password
+        mode: 0444
+      - source: db_root_password
+        mode: 0444
+    healthcheck:
+      test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost", "-P", "3306"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
     networks:
       - intra
 
   wordpress:
     build: ./requirements/wordpress
+    image: wordpress
+    pull_policy: never
     container_name: wordpress
+    hostname: wordpress
     restart: always
     env_file:
       - .env
     depends_on:
-      - mariadb
+      mariadb:
+        condition: service_healthy
     volumes:
       - wordpress_data:/var/www/html
     secrets:
-      - db_password
-      - credentials
+      - source: db_password
+      - source: credentials
+      - source: wp_admin_password
+      - source: wp_user_password
     networks:
       - intra
-
   nginx:
     build: ./requirements/nginx
+    image: nginx
+    pull_policy: never
     container_name: nginx
+    hostname: nginx
     restart: always
     ports:
-      - "80:80"
       - "443:443"
     volumes:
       - wordpress_data:/var/www/html:ro
@@ -50,14 +68,20 @@ services:
   # BONUS SERVICES
   redis:
     build: ./requirements/bonus/redis
+    image: redis
+    pull_policy: never
     container_name: redis
+    hostname: redis
     restart: always
     networks:
       - intra
 
   ftp:
     build: ./requirements/bonus/ftp
+    image: ftp
+    pull_policy: never
     container_name: ftp
+    hostname: ftp
     restart: always
     ports:
       - "21:21"
@@ -66,23 +90,32 @@ services:
       - wordpress_data:/var/www/html
     depends_on:
       - wordpress
+    secrets:
+      - source: ftp_password
     networks:
       - intra
 
   adminer:
     build: ./requirements/bonus/adminer
+    image: adminer
+    pull_policy: never
     container_name: adminer
+    hostname: adminer
     restart: always
     ports:
       - "8080:8080"
     depends_on:
-      - mariadb
+      mariadb:
+        condition: service_healthy
     networks:
       - intra
 
   website:
     build: ./requirements/bonus/website
+    image: website
+    pull_policy: never
     container_name: website
+    hostname: website
     restart: always
     ports:
       - "5000:5000"
@@ -91,10 +124,21 @@ services:
 
 volumes:
   mariadb_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /home/stdi-pum/data/mariadb
   wordpress_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /home/stdi-pum/data/wordpress
 
 networks:
   intra:
+    name: inceptional
     driver: bridge
 
 secrets:
@@ -104,3 +148,9 @@ secrets:
     file: ../secrets/db_root_password.txt
   credentials:
     file: ../secrets/credentials.txt
+  wp_admin_password:
+    file: ../secrets/wp_admin_password.txt
+  wp_user_password:
+    file: ../secrets/wp_user_password.txt
+  ftp_password:
+    file: ../secrets/ftp_password.txt

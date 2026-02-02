@@ -1,63 +1,50 @@
 #!/bin/bash
+set -e
 
-# Initialize MySQL if data directory is empty
-if [ ! -d "/var/lib/mysql/mysql" ]; then
-    echo "Initializing MariaDB database..."
-    mysql_install_db --user=mysql --datadir=/var/lib/mysql
-fi
-
-# Start MariaDB in background
-mysqld --user=mysql &
-MYSQL_PID=$!
-
-# Wait for MariaDB to start
-echo "Waiting for MariaDB to start..."
-while ! mysqladmin ping --silent; do
-    sleep 1
-done
-
-echo "MariaDB started successfully"
-
-# Read passwords from secrets
 DB_ROOT_PASSWORD=$(cat /run/secrets/db_root_password)
 DB_PASSWORD=$(cat /run/secrets/db_password)
 
-# Secure the installation and create databases/users
-mysql -u root << EOF
--- Set root password
+# Initialize database files if needed
+if [ ! -d "/var/lib/mysql/mysql" ]; then
+    mysql_install_db --user=mysql --datadir=/var/lib/mysql
+fi
+
+# Check if this is a fresh install (no root password set yet)
+# We use a marker file to track initialization
+INIT_DONE_MARKER="/var/lib/mysql/.init_done"
+
+if [ ! -f "$INIT_DONE_MARKER" ]; then
+    echo "First-time setup required, starting MariaDB temporarily..."
+    
+    # Start MariaDB temporarily with skip-grant-tables for initial setup
+    mysqld --user=mysql --skip-grant-tables --skip-networking &
+    TEMP_PID=$!
+    
+    echo "Waiting for MariaDB to start..."
+    until mysqladmin ping --silent 2>/dev/null; do sleep 1; done
+    echo "MariaDB started successfully"
+    
+    echo "Setting up database for the first time..."
+    mysql -u root <<SQL
+FLUSH PRIVILEGES;
 ALTER USER 'root'@'localhost' IDENTIFIED BY '${DB_ROOT_PASSWORD}';
-
--- Remove anonymous users
-DELETE FROM mysql.user WHERE User='';
-
--- Remove remote root login (except for necessary connections)
-DELETE FROM mysql.user WHERE User='root' AND Host NOT IN ('localhost', '127.0.0.1', '::1');
-
--- Remove test database
-DROP DATABASE IF EXISTS test;
-DELETE FROM mysql.db WHERE Db='test' OR Db='test\\_%';
-
--- Create WordPress database
-CREATE DATABASE IF NOT EXISTS wordpress CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
-
--- Create WordPress user (regular user)
+CREATE USER IF NOT EXISTS 'root'@'%' IDENTIFIED BY '${DB_ROOT_PASSWORD}';
+GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' WITH GRANT OPTION;
+CREATE DATABASE IF NOT EXISTS wordpress;
 CREATE USER IF NOT EXISTS 'wpuser'@'%' IDENTIFIED BY '${DB_PASSWORD}';
 GRANT ALL PRIVILEGES ON wordpress.* TO 'wpuser'@'%';
-
--- Create WordPress admin user (admin user, but not with forbidden names)
-CREATE USER IF NOT EXISTS 'wpmanager'@'%' IDENTIFIED BY '${DB_PASSWORD}';
-GRANT ALL PRIVILEGES ON wordpress.* TO 'wpmanager'@'%';
-
--- Flush privileges
 FLUSH PRIVILEGES;
-EOF
+SQL
+    
+    echo "Database setup complete"
+    touch "$INIT_DONE_MARKER"
+    
+    # Stop the temporary instance
+    kill $TEMP_PID
+    wait $TEMP_PID 2>/dev/null || true
+    echo "Temporary MariaDB instance stopped"
+fi
 
-echo "Database and users created successfully"
-
-# Stop background MariaDB
-kill $MYSQL_PID
-wait $MYSQL_PID
-
+# Start MariaDB in foreground (this is the main process)
 echo "Starting MariaDB in foreground..."
-# Start MariaDB in foreground
 exec mysqld --user=mysql

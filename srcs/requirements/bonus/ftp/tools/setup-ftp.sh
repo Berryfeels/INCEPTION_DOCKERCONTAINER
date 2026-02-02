@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Read password from secret
+FTP_PASSWORD=$(cat /run/secrets/ftp_password)
+
 # Create FTP user
 adduser --disabled-password --gecos "" ftpuser
 echo "ftpuser:ftppass" | chpasswd

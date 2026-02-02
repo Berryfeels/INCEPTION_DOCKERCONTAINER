@@ -6,7 +6,7 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 # Install Flask
-RUN pip3 install flask
+RUN pip3 install flask --break-system-packages
 
 # Copy application files
 COPY src/ /app/
